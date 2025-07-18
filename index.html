@@ -1226,11 +1226,31 @@
         }
 
         // Employee Management Functions
-        function loadEmployees() {
-            employees = JSON.parse(localStorage.getItem('employees') || '[]');
-            displayEmployeeList();
-            populateEmployeeSelect();
-        }
+        
+function loadEmployees() {
+  fetch('https://script.google.com/macros/s/AKfycbxyo3e_eVDPC6CQ-73TZBUIIygqapT-YXjaGFm9f9ene1YtbNJf_SOo2gXZ_etUscFj/exec')
+    .then(res => res.json())
+    .then(data => {
+      employees = data.map(emp => ({
+        id: emp['รหัสพนักงาน'],
+        name: emp['ชื่อ-นามสกุล'],
+        employeeId: emp['รหัสพนักงาน'],
+        email: emp['อีเมล'] || '',
+        department: emp['แผนก'],
+        dailyWage: parseFloat(emp['ค่าแรงต่อวัน']) || CONFIG.DAILY_WAGE,
+        pin: emp['PIN'].toString().padStart(4, '0'),
+        avatar: generateAvatar(emp['ชื่อ-นามสกุล']),
+      }));
+
+      displayEmployeeList();
+      populateEmployeeSelect();
+      updateDashboardStats?.();
+    })
+    .catch(err => {
+      console.error('โหลดรายชื่อพนักงานล้มเหลว:', err);
+      showMessage('❌ ไม่สามารถโหลดรายชื่อพนักงานได้', 'error');
+    });
+}
 
         function addEmployee() {
             const name = document.getElementById('empName').value.trim();
