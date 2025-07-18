@@ -164,6 +164,41 @@
             text-align: center;
         }
 
+        .employee-login {
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .employee-login h2 {
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 2rem;
+        }
+
+        .employee-login select, .employee-login input {
+            width: 100%;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .employee-login select:focus, .employee-login input:focus {
+            outline: none;
+            border-color: #7CB342;
+            box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1);
+        }
+
+        .employee-interface {
+            display: none;
+        }
+
         .employee-card {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 30px;
@@ -694,6 +729,75 @@
             text-align: center;
         }
 
+        /* Employee Management */
+        .employee-management {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .employee-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .employee-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .employee-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .employee-info {
+            flex: 1;
+        }
+
+        .employee-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .app-container {
@@ -847,58 +951,75 @@
         <!-- Employee Tab -->
         <div id="employee-tab" class="tab-content active">
             <div class="employee-section">
-                <div class="employee-card">
-                    <div class="employee-avatar" id="employeeAvatar">สช</div>
-                    <div class="employee-name" id="employeeName">สมชาย ใจดี</div>
-                    <div class="current-time" id="currentTime"></div>
-                    <div class="location-info" id="locationInfo">
-                        <div class="location-icon"></div>
-                        <span>กำลังค้นหาตำแหน่ง...</span>
-                    </div>
-                    
-                    <div class="employee-details">
-                        <div class="detail-item">
-                            <div class="detail-label">รหัสพนักงาน</div>
-                            <div class="detail-value" id="employeeId">EMP001</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">แผนก</div>
-                            <div class="detail-value" id="employeeDept">เทคโนโลยี</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">สถานะวันนี้</div>
-                            <div class="detail-value" id="todayStatus">ยังไม่เช็คอิน</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">ชั่วโมงทำงาน</div>
-                            <div class="detail-value" id="workHours">0.0 ชั่วโมง</div>
-                        </div>
-                    </div>
+                <!-- Employee Login/Selection -->
+                <div class="employee-login" id="employeeLogin">
+                    <h2>👤 เลือกพนักงาน</h2>
+                    <select id="employeeSelect">
+                        <option value="">-- เลือกพนักงาน --</option>
+                    </select>
+                    <input type="password" id="employeePin" placeholder="รหัส PIN (4 หลัก)" maxlength="4" />
+                    <button class="btn btn-checkin" onclick="employeeLogin()">🔑 เข้าสู่ระบบ</button>
                 </div>
 
-                <div class="status-message" id="statusMessage"></div>
-
-                <div class="action-section">
-                    <div class="action-buttons">
-                        <button class="btn btn-checkin" id="checkinBtn" onclick="checkIn()">
-                            <span id="checkinText">🟢 เช็คอิน</span>
-                        </button>
-                        <button class="btn btn-checkout" id="checkoutBtn" onclick="checkOut()">
-                            <span id="checkoutText">🔴 เช็คเอาท์</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="recent-logs">
-                    <h3>📅 กิจกรรมวันนี้</h3>
-                    <div id="recentLogs">
-                        <div class="log-entry">
-                            <div class="log-type">
-                                <span>📝</span>
-                                <span>ยังไม่มีกิจกรรมในวันนี้</span>
+                <!-- Employee Interface -->
+                <div class="employee-interface" id="employeeInterface">
+                    <div class="employee-card">
+                        <div class="employee-avatar" id="employeeAvatar">--</div>
+                        <div class="employee-name" id="employeeName">--</div>
+                        <div class="current-time" id="currentTime"></div>
+                        <div class="location-info" id="locationInfo">
+                            <div class="location-icon"></div>
+                            <span>กำลังค้นหาตำแหน่ง...</span>
+                        </div>
+                        
+                        <div class="employee-details">
+                            <div class="detail-item">
+                                <div class="detail-label">รหัสพนักงาน</div>
+                                <div class="detail-value" id="employeeId">--</div>
                             </div>
-                            <div class="log-time">--:--</div>
+                            <div class="detail-item">
+                                <div class="detail-label">แผนก</div>
+                                <div class="detail-value" id="employeeDept">--</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">สถานะวันนี้</div>
+                                <div class="detail-value" id="todayStatus">ยังไม่เช็คอิน</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">ชั่วโมงทำงาน</div>
+                                <div class="detail-value" id="workHours">0.0 ชั่วโมง</div>
+                            </div>
                         </div>
+                    </div>
+
+                    <div class="status-message" id="statusMessage"></div>
+
+                    <div class="action-section">
+                        <div class="action-buttons">
+                            <button class="btn btn-checkin" id="checkinBtn" onclick="checkIn()">
+                                <span id="checkinText">🟢 เช็คอิน</span>
+                            </button>
+                            <button class="btn btn-checkout" id="checkoutBtn" onclick="checkOut()">
+                                <span id="checkoutText">🔴 เช็คเอาท์</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="recent-logs">
+                        <h3>📅 กิจกรรมวันนี้</h3>
+                        <div id="recentLogs">
+                            <div class="log-entry">
+                                <div class="log-type">
+                                    <span>📝</span>
+                                    <span>ยังไม่มีกิจกรรมในวันนี้</span>
+                                </div>
+                                <div class="log-time">--:--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button class="btn-export" onclick="logoutEmployee()">🚪 ออกจากระบบ</button>
                     </div>
                 </div>
             </div>
@@ -916,6 +1037,26 @@
             </div>
 
             <div class="admin-dashboard" id="adminDashboard">
+                <!-- Employee Management Section -->
+                <div class="employee-management">
+                    <h3>👥 จัดการข้อมูลพนักงาน</h3>
+                    <div class="employee-form">
+                        <input type="text" id="empName" placeholder="ชื่อ-นามสกุล" />
+                        <input type="text" id="empId" placeholder="รหัสพนักงาน" />
+                        <input type="email" id="empEmail" placeholder="อีเมล" />
+                        <input type="text" id="empDept" placeholder="แผนก" />
+                        <input type="number" id="empWage" placeholder="ค่าแรงต่อวัน" />
+                        <input type="text" id="empPin" placeholder="รหัส PIN (4 หลัก)" maxlength="4" />
+                        <button class="btn-export" onclick="addEmployee()">+ เพิ่มพนักงาน</button>
+                    </div>
+                    
+                    <div class="employee-list" id="employeeList">
+                        <div style="text-align: center; color: #666; padding: 20px;">
+                            ยังไม่มีข้อมูลพนักงาน กรุณาเพิ่มข้อมูลพนักงานใหม่
+                        </div>
+                    </div>
+                </div>
+
                 <div class="dashboard-header">
                     <h2 class="dashboard-title">📊 แดชบอร์ดผู้ดูแลระบบ</h2>
                     <div class="dashboard-controls">
@@ -932,25 +1073,25 @@
                         <div class="stat-icon">👥</div>
                         <div class="stat-number" id="totalEmployees">0</div>
                         <div class="stat-label">พนักงานทั้งหมด</div>
-                        <div class="stat-trend">+2 เดือนนี้</div>
+                        <div class="stat-trend">+0 เดือนนี้</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">✅</div>
                         <div class="stat-number" id="presentToday">0</div>
                         <div class="stat-label">มาทำงานวันนี้</div>
-                        <div class="stat-trend">87% การเข้าร่วม</div>
+                        <div class="stat-trend">0% การเข้าร่วม</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">⏰</div>
                         <div class="stat-number" id="lateCheckIns">0</div>
                         <div class="stat-label">มาสาย</div>
-                        <div class="stat-trend">-15% จากเมื่อวาน</div>
+                        <div class="stat-trend">0% จากเมื่อวาน</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">🕐</div>
                         <div class="stat-number" id="overtimeHours">0</div>
                         <div class="stat-label">ชั่วโมงล่วงเวลา</div>
-                        <div class="stat-trend">+5% สัปดาห์นี้</div>
+                        <div class="stat-trend">0% สัปดาห์นี้</div>
                     </div>
                 </div>
 
@@ -967,7 +1108,7 @@
                     </div>
                     <div class="table-body" id="attendanceTableBody">
                         <div style="padding: 40px; text-align: center; color: #666;">
-                            กำลังโหลดข้อมูลการเข้าทำงาน...
+                            ยังไม่มีข้อมูลการเข้าทำงาน
                         </div>
                     </div>
                 </div>
@@ -1038,7 +1179,7 @@
             // Location Settings (ขอนแก่น)
             OFFICE_LAT: 16.38648,
             OFFICE_LNG: 102.83138,
-            OFFICE_RADIUS: 50,
+            OFFICE_RADIUS: 300,
             
             // System Settings
             ADMIN_PASSWORD: 'chaum2021',
@@ -1062,51 +1203,19 @@
         let currentUserLogs = [];
         let isCheckedIn = false;
         let checkInTime = null;
-
-        // Demo users
-        const DEMO_USERS = [
-            {
-                id: 'chaum_001',
-                name: 'สมชาย ใจดี',
-                email: 'somchai@chaum2021.com',
-                department: 'เทคโนโลยี',
-                employeeId: 'EMP001',
-                avatar: 'สช',
-                dailyWage: 800
-            },
-            {
-                id: 'chaum_002',
-                name: 'สมหญิง สวยงาม',
-                email: 'somying@chaum2021.com',
-                department: 'การตลาด',
-                employeeId: 'EMP002',
-                avatar: 'สญ',
-                dailyWage: 750
-            },
-            {
-                id: 'chaum_003',
-                name: 'สมปอง เก่งงาน',
-                email: 'sompong@chaum2021.com',
-                department: 'ขาย',
-                employeeId: 'EMP003',
-                avatar: 'สป',
-                dailyWage: 900
-            }
-        ];
+        let employees = [];
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
             updateClock();
             setInterval(updateClock, 1000);
-            loadMockData();
-            checkTodayStatus();
+            loadEmployees();
+            populateEmployeeSelect();
         });
 
         function initializeApp() {
             setupCompanyBranding();
-            currentUser = DEMO_USERS[0];
-            setupUserInterface();
         }
 
         function setupCompanyBranding() {
@@ -1116,6 +1225,183 @@
             document.title = `${CONFIG.COMPANY_NAME} - ระบบลงเวลาทำงาน`;
         }
 
+        // Employee Management Functions
+        function loadEmployees() {
+            employees = JSON.parse(localStorage.getItem('employees') || '[]');
+            displayEmployeeList();
+            populateEmployeeSelect();
+        }
+
+        function addEmployee() {
+            const name = document.getElementById('empName').value.trim();
+            const employeeId = document.getElementById('empId').value.trim();
+            const email = document.getElementById('empEmail').value.trim();
+            const department = document.getElementById('empDept').value.trim();
+            const dailyWage = parseFloat(document.getElementById('empWage').value) || CONFIG.DAILY_WAGE;
+            const pin = document.getElementById('empPin').value.trim();
+
+            if (!name || !employeeId || !department || !pin) {
+                showMessage('❌ กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                return;
+            }
+
+            if (pin.length !== 4 || isNaN(pin)) {
+                showMessage('❌ รหัส PIN ต้องเป็นตัวเลข 4 หลัก', 'error');
+                return;
+            }
+
+            // Check for duplicate employee ID
+            if (employees.find(emp => emp.employeeId === employeeId)) {
+                showMessage('❌ รหัสพนักงานนี้มีอยู่แล้ว', 'error');
+                return;
+            }
+
+            const newEmployee = {
+                id: 'emp_' + Date.now(),
+                name: name,
+                employeeId: employeeId,
+                email: email,
+                department: department,
+                dailyWage: dailyWage,
+                pin: pin,
+                avatar: generateAvatar(name),
+                createdAt: new Date().toISOString()
+            };
+
+            employees.push(newEmployee);
+            localStorage.setItem('employees', JSON.stringify(employees));
+
+            // Clear form
+            ['empName', 'empId', 'empEmail', 'empDept', 'empWage', 'empPin'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+
+            showMessage('✅ เพิ่มพนักงานเรียบร้อยแล้ว', 'success');
+            displayEmployeeList();
+            populateEmployeeSelect();
+            updateDashboardStats();
+        }
+
+        function generateAvatar(name) {
+            const words = name.split(' ');
+            if (words.length >= 2) {
+                return words[0].charAt(0) + words[1].charAt(0);
+            } else {
+                return name.substring(0, 2);
+            }
+        }
+
+        function displayEmployeeList() {
+            const container = document.getElementById('employeeList');
+            
+            if (employees.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        ยังไม่มีข้อมูลพนักงาน กรุณาเพิ่มข้อมูลพนักงานใหม่
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = employees.map(emp => `
+                <div class="employee-item">
+                    <div class="employee-info">
+                        <strong>${emp.name}</strong> (${emp.employeeId})<br>
+                        <small>${emp.department} • ฿${emp.dailyWage}/วัน • PIN: ${emp.pin}</small>
+                    </div>
+                    <div class="employee-actions">
+                        <button class="btn-small btn-edit" onclick="editEmployee('${emp.id}')">แก้ไข</button>
+                        <button class="btn-small btn-delete" onclick="deleteEmployee('${emp.id}')">ลบ</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editEmployee(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+
+            document.getElementById('empName').value = employee.name;
+            document.getElementById('empId').value = employee.employeeId;
+            document.getElementById('empEmail').value = employee.email || '';
+            document.getElementById('empDept').value = employee.department;
+            document.getElementById('empWage').value = employee.dailyWage;
+            document.getElementById('empPin').value = employee.pin;
+
+            // Remove old employee and let user add as new
+            deleteEmployee(id, false);
+        }
+
+        function deleteEmployee(id, showConfirm = true) {
+            if (showConfirm && !confirm('ต้องการลบพนักงานคนนี้ใช่หรือไม่?')) {
+                return;
+            }
+
+            employees = employees.filter(emp => emp.id !== id);
+            localStorage.setItem('employees', JSON.stringify(employees));
+            
+            if (showConfirm) {
+                showMessage('✅ ลบพนักงานเรียบร้อยแล้ว', 'success');
+            }
+            
+            displayEmployeeList();
+            populateEmployeeSelect();
+            updateDashboardStats();
+        }
+
+        function populateEmployeeSelect() {
+            const select = document.getElementById('employeeSelect');
+            select.innerHTML = '<option value="">-- เลือกพนักงาน --</option>' +
+                employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.employeeId})</option>`).join('');
+        }
+
+        // Employee Login Functions
+        function employeeLogin() {
+            const selectedId = document.getElementById('employeeSelect').value;
+            const pin = document.getElementById('employeePin').value;
+
+            if (!selectedId) {
+                showMessage('❌ กรุณาเลือกพนักงาน', 'error');
+                return;
+            }
+
+            if (!pin) {
+                showMessage('❌ กรุณาใส่รหัส PIN', 'error');
+                return;
+            }
+
+            const employee = employees.find(emp => emp.id === selectedId);
+            if (!employee) {
+                showMessage('❌ ไม่พบข้อมูลพนักงาน', 'error');
+                return;
+            }
+
+            if (employee.pin !== pin) {
+                showMessage('❌ รหัส PIN ไม่ถูกต้อง', 'error');
+                return;
+            }
+
+            currentUser = employee;
+            setupUserInterface();
+            document.getElementById('employeeLogin').style.display = 'none';
+            document.getElementById('employeeInterface').style.display = 'block';
+            
+            showNotification(`ยินดีต้อนรับ ${employee.name}!`);
+        }
+
+        function logoutEmployee() {
+            currentUser = null;
+            isCheckedIn = false;
+            checkInTime = null;
+            
+            document.getElementById('employeeLogin').style.display = 'block';
+            document.getElementById('employeeInterface').style.display = 'none';
+            document.getElementById('employeeSelect').value = '';
+            document.getElementById('employeePin').value = '';
+            
+            showNotification('ออกจากระบบเรียบร้อย!');
+        }
+
         function setupUserInterface() {
             document.getElementById('employeeName').textContent = currentUser.name;
             document.getElementById('employeeId').textContent = currentUser.employeeId;
@@ -1123,6 +1409,7 @@
             document.getElementById('employeeAvatar').textContent = currentUser.avatar;
             getCurrentLocation();
             loadTodayLogs();
+            checkTodayStatus();
         }
 
         function getCurrentLocation() {
@@ -1247,7 +1534,10 @@
                 day: 'numeric' 
             });
             
-            document.getElementById('currentTime').textContent = `${timeString} • ${dateString}`;
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                timeElement.textContent = `${timeString} • ${dateString}`;
+            }
             updateWorkHours();
         }
 
@@ -1255,11 +1545,16 @@
             if (isCheckedIn && checkInTime) {
                 const now = new Date();
                 const workTime = (now - checkInTime) / (1000 * 60 * 60);
-                document.getElementById('workHours').textContent = `${workTime.toFixed(1)} ชั่วโมง`;
+                const workHoursElement = document.getElementById('workHours');
+                if (workHoursElement) {
+                    workHoursElement.textContent = `${workTime.toFixed(1)} ชั่วโมง`;
+                }
             }
         }
 
         function checkTodayStatus() {
+            if (!currentUser) return;
+            
             const today = new Date().toDateString();
             const records = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
             const todayRecords = records.filter(r => r.userId === currentUser.id && r.date === today);
@@ -1285,7 +1580,7 @@
         }
 
         function checkIn() {
-            if (!checkLocationValidity()) return;
+            if (!currentUser || !checkLocationValidity()) return;
             
             const now = new Date();
             const record = {
@@ -1325,7 +1620,7 @@
         }
 
         function checkOut() {
-            if (!checkLocationValidity()) return;
+            if (!currentUser || !checkLocationValidity()) return;
             
             const now = new Date();
             const workHours = isCheckedIn && checkInTime ? 
@@ -1380,6 +1675,8 @@
         }
 
         function loadTodayLogs() {
+            if (!currentUser) return;
+            
             const today = new Date().toDateString();
             const records = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
             const todayRecords = records.filter(r => r.userId === currentUser.id && r.date === today);
@@ -1421,13 +1718,15 @@
 
         function showMessage(message, type) {
             const messageEl = document.getElementById('statusMessage');
-            messageEl.textContent = message;
-            messageEl.className = `status-message status-${type}`;
-            messageEl.style.display = 'block';
-            
-            setTimeout(() => {
-                messageEl.style.display = 'none';
-            }, 8000);
+            if (messageEl) {
+                messageEl.textContent = message;
+                messageEl.className = `status-message status-${type}`;
+                messageEl.style.display = 'block';
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 8000);
+            }
         }
 
         function showNotification(message) {
@@ -1472,6 +1771,7 @@
         }
 
         function loadAdminDashboard() {
+            loadEmployees();
             const records = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
             attendanceData = records;
             
@@ -1484,10 +1784,10 @@
             const today = new Date().toDateString();
             const todayRecords = attendanceData.filter(r => r.date === today);
             
-            const employees = [...new Set(attendanceData.map(r => r.userId))];
+            const employeeCount = employees.length;
             const presentToday = [...new Set(todayRecords.filter(r => r.type === 'check-in').map(r => r.userId))];
             
-            document.getElementById('totalEmployees').textContent = employees.length;
+            document.getElementById('totalEmployees').textContent = employeeCount;
             document.getElementById('presentToday').textContent = presentToday.length;
             document.getElementById('lateCheckIns').textContent = calculateLateCheckIns();
             document.getElementById('overtimeHours').textContent = calculateOvertimeHours();
@@ -1629,10 +1929,10 @@
 
         function populateEmployeeFilter() {
             const select = document.getElementById('employeeFilter');
-            const employees = [...new Set(attendanceData.map(r => r.userName))];
+            const employeeNames = [...new Set(attendanceData.map(r => r.userName))];
             
             select.innerHTML = '<option value="">พนักงานทั้งหมด</option>' + 
-                employees.map(name => `<option value="${name}">${name}</option>`).join('');
+                employeeNames.map(name => `<option value="${name}">${name}</option>`).join('');
         }
 
         function filterAttendance() {
@@ -1725,65 +2025,6 @@
         function syncToGoogleSheets() {
             showNotification('ซิงค์ข้อมูลกับ Google Sheets!');
             console.log('Google Sheets sync functionality ready for implementation');
-        }
-
-        function loadMockData() {
-            const mockRecords = [];
-            const today = new Date();
-            
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                
-                DEMO_USERS.forEach(user => {
-                    if (Math.random() > 0.2) {
-                        const checkInTime = new Date(date);
-                        checkInTime.setHours(8 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60));
-                        
-                        mockRecords.push({
-                            id: Date.now() + Math.random(),
-                            userId: user.id,
-                            userName: user.name,
-                            employeeId: user.employeeId,
-                            type: 'check-in',
-                            timestamp: checkInTime.toISOString(),
-                            location: { 
-                                lat: CONFIG.OFFICE_LAT + (Math.random() - 0.5) * 0.001, 
-                                lng: CONFIG.OFFICE_LNG + (Math.random() - 0.5) * 0.001 
-                            },
-                            address: 'สำนักงาน ขอนแก่น',
-                            date: date.toDateString()
-                        });
-                        
-                        const isToday = date.toDateString() === today.toDateString();
-                        const currentHour = today.getHours();
-                        
-                        if (!isToday || (isToday && currentHour >= 16)) {
-                            const checkOutTime = new Date(checkInTime);
-                            checkOutTime.setHours(16 + Math.floor(Math.random() * 2), 30 + Math.floor(Math.random() * 30));
-                            
-                            mockRecords.push({
-                                id: Date.now() + Math.random(),
-                                userId: user.id,
-                                userName: user.name,
-                                employeeId: user.employeeId,
-                                type: 'check-out',
-                                timestamp: checkOutTime.toISOString(),
-                                location: { 
-                                    lat: CONFIG.OFFICE_LAT + (Math.random() - 0.5) * 0.001, 
-                                    lng: CONFIG.OFFICE_LNG + (Math.random() - 0.5) * 0.001 
-                                },
-                                address: 'สำนักงาน ขอนแก่น',
-                                date: date.toDateString()
-                            });
-                        }
-                    }
-                });
-            }
-            
-            const existingRecords = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
-            const allRecords = [...existingRecords, ...mockRecords];
-            localStorage.setItem('attendanceRecords', JSON.stringify(allRecords));
         }
 
         // Initialize date filter to today
