@@ -159,7 +159,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Employee Section Styles */
         .employee-section {
             text-align: center;
         }
@@ -464,7 +463,6 @@
             transform: translateX(0);
         }
 
-        /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .app-container {
                 margin: 10px;
@@ -548,10 +546,8 @@
             <button class="nav-tab active" onclick="switchTab('employee')">📱 พนักงาน</button>
         </div>
 
-        <!-- Employee Tab -->
         <div id="employee-tab" class="tab-content active">
             <div class="employee-section">
-                <!-- Employee Login/Selection -->
                 <div class="employee-login" id="employeeLogin">
                     <h2>👤 เลือกพนักงาน</h2>
                     <select id="employeeSelect">
@@ -561,7 +557,6 @@
                     <button class="btn btn-checkin" onclick="employeeLogin()">🔑 เข้าสู่ระบบ</button>
                 </div>
 
-                <!-- Employee Interface -->
                 <div class="employee-interface" id="employeeInterface">
                     <div class="employee-card">
                         <div class="employee-avatar" id="employeeAvatar">--</div>
@@ -629,28 +624,19 @@
     <script>
         // Configuration
         const CONFIG = {
-            // Google Apps Script URL - ใส่ URL ของ Google Apps Script ของคุณที่นี่
-            // ตัวอย่าง: 'https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec'
-            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbys2vJGE4DYPD4LmVz6nStqioirOlo6rBIj1y0mwkyW1Jt0_aSnAL_J-OlA8znZ4pt9/exec',
-            
-            // Company Information
+            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbztirBp-1KsrLIg2pm3Bprky-aBJKN5obLRgHfCwPt-j0533RbDNvirJho_wL9FvTpq/exec',
             COMPANY_NAME: 'บริษัท ชอุ่ม 2021 จำกัด',
             COMPANY_NAME_EN: 'Chaum 2021 Co., Ltd.',
             COMPANY_SHORT_NAME: 'ชอุ่ม',
             COMPANY_SUBTITLE: 'เทคโนโลยี • คุณภาพ • ความไว้วางใจ',
-            
-            // Location Settings (ขอนแก่น)
             OFFICE_LAT: 16.38648,
             OFFICE_LNG: 102.83138,
-            OFFICE_RADIUS: 50, // เมตร
-            
-            // System Settings
+            OFFICE_RADIUS: 50,
             WORK_START_TIME: '08:45',
             WORK_END_TIME: '16:30',
             OVERTIME_THRESHOLD: 8
         };
 
-        // Global variables
         let currentUser = null;
         let currentLocation = null;
         let employees = [];
@@ -658,7 +644,6 @@
         let checkInTime = null;
         let todayLogs = [];
 
-        // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
             updateClock();
@@ -688,7 +673,6 @@
         function updateConnectionStatus(status, isOnline) {
             const statusText = document.getElementById('connectionStatus');
             const statusDot = document.getElementById('statusDot');
-            
             if (statusText) statusText.textContent = status;
             if (statusDot) {
                 statusDot.style.background = isOnline ? '#4CAF50' : '#f44336';
@@ -696,83 +680,42 @@
             }
         }
 
-        
-async function loadEmployees() {
-    try {
-        showMessage('กำลังโหลดข้อมูลพนักงาน...', 'warning');
+        async function loadEmployees() {
+            try {
+                showMessage('กำลังโหลดข้อมูลพนักงาน...', 'warning');
 
-        const response = await fetch(CONFIG.SCRIPT_URL);
+                const response = await fetch(CONFIG.SCRIPT_URL);
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-        const raw = await response.json();
+                const raw = await response.json();
 
-        // ✅ ป้องกันไม่ให้ error: แปลง Object ที่ได้จาก Google Apps Script เป็น Array
-        employees = Array.isArray(raw)
-            ? raw
-            : typeof raw === 'object'
-                ? Object.values(raw)
-                : [];
+                employees = Array.isArray(raw)
+                    ? raw
+                    : Array.isArray(raw.data)
+                        ? raw.data
+                        : typeof raw === 'object'
+                            ? Object.values(raw)
+                            : [];
 
-        if (!Array.isArray(employees)) throw new Error("ข้อมูลพนักงานไม่อยู่ในรูปแบบ array");
+                if (!Array.isArray(employees) || employees.length === 0) {
+                    throw new Error("ข้อมูลพนักงานไม่อยู่ในรูปแบบ array หรือไม่มีข้อมูล");
+                }
 
-        populateEmployeeSelect();
-        showMessage('โหลดข้อมูลพนักงานสำเร็จ', 'success');
-        updateConnectionStatus('ออนไลน์', true);
-
-    } catch (error) {
-        console.error('Failed to load employees:', error);
-        showMessage('ไม่สามารถโหลดข้อมูลพนักงานได้ กรุณาลองใหม่อีกครั้ง', 'error');
-        updateConnectionStatus('ออฟไลน์', false);
-
-        // Fallback demo
-        employees = [
-            {
-                'ชื่อ-นามสกุล': 'สมชาย ใจดี',
-                'รหัสพนักงาน': 'EMP001',
-                'แผนก': 'ไอที',
-                'PIN': '1234'
-            },
-            {
-                'ชื่อ-นามสกุล': 'สมหญิง รักงาน',
-                'รหัสพนักงาน': 'EMP002',
-                'แผนก': 'บัญชี',
-                'PIN': '5678'
-            }
-        ];
-        populateEmployeeSelect();
-    }
-}
-
-                
-                const data = await response.json();
-                employees = data;
-                
                 populateEmployeeSelect();
                 showMessage('โหลดข้อมูลพนักงานสำเร็จ', 'success');
                 updateConnectionStatus('ออนไลน์', true);
-                
+
             } catch (error) {
                 console.error('Failed to load employees:', error);
                 showMessage('ไม่สามารถโหลดข้อมูลพนักงานได้ กรุณาลองใหม่อีกครั้ง', 'error');
                 updateConnectionStatus('ออฟไลน์', false);
-                
-                // Fallback to demo data
+
                 employees = [
-                    { 
-                        'ชื่อ-นามสกุล': 'สมชาย ใจดี', 
-                        'รหัสพนักงาน': 'EMP001', 
-                        'แผนก': 'ไอที', 
-                        'PIN': '1234' 
-                    },
-                    { 
-                        'ชื่อ-นามสกุล': 'สมหญิง รักงาน', 
-                        'รหัสพนักงาน': 'EMP002', 
-                        'แผนก': 'บัญชี', 
-                        'PIN': '5678' 
-                    }
+                    { 'ชื่อ-นามสกุล': 'สมชาย ใจดี', 'รหัสพนักงาน': 'EMP001', 'แผนก': 'ไอที', 'PIN': '1234' },
+                    { 'ชื่อ-นามสกุล': 'สมหญิง รักงาน', 'รหัสพนักงาน': 'EMP002', 'แผนก': 'บัญชี', 'PIN': '5678' }
                 ];
                 populateEmployeeSelect();
             }
@@ -780,25 +723,29 @@ async function loadEmployees() {
 
         function populateEmployeeSelect() {
             const select = document.getElementById('employeeSelect');
-            
-            if (employees.length === 0) {
+            if (!select) return;
+
+            if (!Array.isArray(employees) || employees.length === 0) {
                 select.innerHTML = '<option value="">-- ไม่พบข้อมูลพนักงาน --</option>';
                 return;
             }
-            
-            select.innerHTML = '<option value="">-- เลือกพนักงาน --</option>' +
-                employees.map((emp, index) => {
-                    const name = emp['ชื่อ-นามสกุล'] || emp.name || 'ไม่ระบุชื่อ';
-                    const empId = emp['รหัสพนักงาน'] || emp.employeeId || 'EMP' + (index + 1);
-                    return '<option value="' + index + '">' + name + ' (' + empId + ')</option>';
-                }).join('');
+
+            select.innerHTML = '<option value="">-- เลือกพนักงาน --</option>';
+            employees.forEach((emp, index) => {
+                const name = emp['ชื่อ-นามสกุล'] || emp.name || 'ไม่ระบุชื่อ';
+                const empId = emp['รหัสพนักงาน'] || emp.employeeId || `EMP${index + 1}`;
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${name} (${empId})`;
+                select.appendChild(option);
+            });
         }
 
         function employeeLogin() {
             const selectedIndex = document.getElementById('employeeSelect').value;
             const pin = document.getElementById('employeePin').value;
 
-            if (!selectedIndex && selectedIndex !== 0) {
+            if (!selectedIndex && selectedIndex !== '0') {
                 showMessage('❌ กรุณาเลือกพนักงาน', 'error');
                 return;
             }
@@ -824,7 +771,6 @@ async function loadEmployees() {
             setupUserInterface();
             document.getElementById('employeeLogin').style.display = 'none';
             document.getElementById('employeeInterface').style.display = 'block';
-            
             showNotification('ยินดีต้อนรับ ' + getCurrentUserName() + '!');
         }
 
@@ -845,12 +791,10 @@ async function loadEmployees() {
             isCheckedIn = false;
             checkInTime = null;
             todayLogs = [];
-            
             document.getElementById('employeeLogin').style.display = 'block';
             document.getElementById('employeeInterface').style.display = 'none';
             document.getElementById('employeeSelect').value = '';
             document.getElementById('employeePin').value = '';
-            
             showNotification('ออกจากระบบเรียบร้อย!');
         }
 
@@ -858,23 +802,17 @@ async function loadEmployees() {
             const name = getCurrentUserName();
             const empId = getCurrentUserId();
             const dept = getCurrentUserDept();
-            
             document.getElementById('employeeName').textContent = name;
             document.getElementById('employeeId').textContent = empId;
             document.getElementById('employeeDept').textContent = dept;
             document.getElementById('employeeAvatar').textContent = generateAvatar(name);
-            
             getCurrentLocation();
             checkTodayStatus();
         }
 
         function generateAvatar(name) {
             const words = name.split(' ');
-            if (words.length >= 2) {
-                return words[0].charAt(0) + words[1].charAt(0);
-            } else {
-                return name.substring(0, 2);
-            }
+            return words.length >= 2 ? words[0].charAt(0) + words[1].charAt(0) : name.substring(0, 2);
         }
 
         function getCurrentLocation() {
@@ -890,7 +828,6 @@ async function loadEmployees() {
                             accuracy: position.coords.accuracy,
                             timestamp: Date.now()
                         };
-                        
                         reverseGeocode(currentLocation.lat, currentLocation.lng);
                         checkLocationValidity();
                     },
@@ -898,11 +835,7 @@ async function loadEmployees() {
                         locationInfo.innerHTML = '<div class="location-icon" style="background: #f44336;"></div><span>ไม่สามารถเข้าถึงตำแหน่ง</span>';
                         handleLocationError(error);
                     },
-                    { 
-                        enableHighAccuracy: true, 
-                        timeout: 15000, 
-                        maximumAge: 60000 
-                    }
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
                 );
             } else {
                 locationInfo.innerHTML = '<div class="location-icon" style="background: #f44336;"></div><span>ไม่รองรับการหาตำแหน่ง</span>';
@@ -912,24 +845,16 @@ async function loadEmployees() {
         function handleLocationError(error) {
             let message = '';
             switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    message = "ผู้ใช้ปฏิเสธการเข้าถึงตำแหน่ง";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    message = "ไม่สามารถหาตำแหน่งได้";
-                    break;
-                case error.TIMEOUT:
-                    message = "หมดเวลาในการค้นหาตำแหน่ง";
-                    break;
-                default:
-                    message = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
-                    break;
+                case error.PERMISSION_DENIED: message = "ผู้ใช้ปฏิเสธการเข้าถึงตำแหน่ง"; break;
+                case error.POSITION_UNAVAILABLE: message = "ไม่สามารถหาตำแหน่งได้"; break;
+                case error.TIMEOUT: message = "หมดเวลาในการค้นหาตำแหน่ง"; break;
+                default: message = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"; break;
             }
             showMessage(message, 'error');
         }
 
         function reverseGeocode(lat, lng) {
-            const mockAddress = lat.toFixed(4) + ', ' + lng.toFixed(4) + ' - ขอนแก่น, ประเทศไทย';
+            const mockAddress = `${lat.toFixed(4)}, ${lng.toFixed(4)} - ขอนแก่น, ประเทศไทย`;
             updateLocationDisplay(mockAddress);
         }
 
@@ -940,62 +865,45 @@ async function loadEmployees() {
 
         function checkLocationValidity() {
             if (!currentLocation) return false;
-            
             const distance = calculateDistance(
                 currentLocation.lat, currentLocation.lng,
                 CONFIG.OFFICE_LAT, CONFIG.OFFICE_LNG
             );
-            
             const isValid = distance <= CONFIG.OFFICE_RADIUS;
             const checkinBtn = document.getElementById('checkinBtn');
             const checkoutBtn = document.getElementById('checkoutBtn');
-            
             if (!isValid) {
                 if (!isCheckedIn) checkinBtn.disabled = true;
                 if (isCheckedIn) checkoutBtn.disabled = true;
-                showMessage('⚠️ คุณอยู่ห่างจากสำนักงาน ' + Math.round(distance) + ' เมตร กรุณาเข้าใกล้ให้อยู่ในรัศมี ' + CONFIG.OFFICE_RADIUS + ' เมตร', 'warning');
+                showMessage(`⚠️ คุณอยู่ห่างจากสำนักงาน ${Math.round(distance)} เมตร กรุณาเข้าใกล้ให้อยู่ในรัศมี ${CONFIG.OFFICE_RADIUS} เมตร`, 'warning');
             } else {
                 if (!isCheckedIn) checkinBtn.disabled = false;
                 if (isCheckedIn) checkoutBtn.disabled = false;
-                showMessage('✅ ตำแหน่งถูกต้อง คุณอยู่ห่างจากสำนักงาน ' + Math.round(distance) + ' เมตร', 'success');
+                showMessage(`✅ ตำแหน่งถูกต้อง คุณอยู่ห่างจากสำนักงาน ${Math.round(distance)} เมตร`, 'success');
             }
-            
             return isValid;
         }
 
         function calculateDistance(lat1, lng1, lat2, lng2) {
-            const R = 6371e3; // Earth's radius in meters
+            const R = 6371e3;
             const φ1 = lat1 * Math.PI/180;
             const φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180;
             const Δλ = (lng2-lng1) * Math.PI/180;
-
             const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
                     Math.cos(φ1) * Math.cos(φ2) *
                     Math.sin(Δλ/2) * Math.sin(Δλ/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
             return R * c;
         }
 
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('th-TH', { 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit' 
-            });
-            const dateString = now.toLocaleDateString('th-TH', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            
+            const timeString = now.toLocaleTimeString('th-TH', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateString = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             const timeElement = document.getElementById('currentTime');
             if (timeElement) {
-                timeElement.textContent = timeString + ' • ' + dateString;
+                timeElement.textContent = `${timeString} • ${dateString}`;
             }
             updateWorkHours();
         }
@@ -1012,17 +920,13 @@ async function loadEmployees() {
         }
 
         function checkTodayStatus() {
-            // ตรวจสอบสถานะวันนี้จาก localStorage
             const today = new Date().toDateString();
             const userKey = getCurrentUserId() + '_' + today;
             const savedLogs = JSON.parse(localStorage.getItem('todayLogs') || '{}');
             const userLogs = savedLogs[userKey] || [];
-            
             todayLogs = userLogs;
-            
-            const lastCheckIn = userLogs.filter(function(log) { return log.status === 'เช็คอิน'; }).pop();
-            const lastCheckOut = userLogs.filter(function(log) { return log.status === 'เช็คเอาท์'; }).pop();
-            
+            const lastCheckIn = userLogs.filter(log => log.status === 'เช็คอิน').pop();
+            const lastCheckOut = userLogs.filter(log => log.status === 'เช็คเอาท์').pop();
             if (lastCheckIn && (!lastCheckOut || new Date(lastCheckIn.timestamp) > new Date(lastCheckOut.timestamp))) {
                 isCheckedIn = true;
                 checkInTime = new Date(lastCheckIn.timestamp);
@@ -1038,33 +942,25 @@ async function loadEmployees() {
                 document.getElementById('checkinBtn').disabled = false;
                 document.getElementById('checkoutBtn').disabled = true;
             }
-            
             updateTodayLogsDisplay();
         }
 
         function updateTodayLogsDisplay() {
             const logsContainer = document.getElementById('recentLogs');
-            
+            if (!logsContainer) return;
             if (todayLogs.length === 0) {
                 logsContainer.innerHTML = '<div class="log-entry"><div class="log-type"><span>📝</span><span>ยังไม่มีกิจกรรมในวันนี้</span></div><div class="log-time">--:--</div></div>';
                 return;
             }
-
-            logsContainer.innerHTML = todayLogs.map(function(log) {
-                const time = new Date(log.timestamp).toLocaleTimeString('th-TH', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                
+            logsContainer.innerHTML = todayLogs.map(log => {
+                const time = new Date(log.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
                 const icon = log.status === 'เช็คอิน' ? '🟢' : '🔴';
-                
-                return '<div class="log-entry"><div class="log-type"><span>' + icon + '</span><span>' + log.status + '</span></div><div class="log-time">' + time + '</div></div>';
+                return `<div class="log-entry"><div class="log-type"><span>${icon}</span><span>${log.status}</span></div><div class="log-time">${time}</div></div>`;
             }).join('');
         }
 
         async function checkIn() {
             if (!currentUser || !checkLocationValidity()) return;
-            
             const btn = document.getElementById('checkinBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<div class="loading"></div> กำลังเช็คอิน...';
@@ -1073,7 +969,6 @@ async function loadEmployees() {
             try {
                 const now = new Date();
                 const locationText = document.getElementById('locationInfo').querySelector('span').textContent;
-                
                 const attendanceData = {
                     name: getCurrentUserName(),
                     employeeId: getCurrentUserId(),
@@ -1084,12 +979,9 @@ async function loadEmployees() {
                     timestamp: now.toISOString()
                 };
 
-                // ส่งข้อมูลไป Google Sheets
                 const response = await fetch(CONFIG.SCRIPT_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(attendanceData)
                 });
 
@@ -1098,67 +990,52 @@ async function loadEmployees() {
                 }
 
                 const result = await response.json();
-                
                 if (result.result === 'success') {
-                    // บันทึกใน localStorage
                     saveToLocalStorage(attendanceData);
-                    
                     isCheckedIn = true;
                     checkInTime = now;
-                    
                     document.getElementById('todayStatus').textContent = 'เช็คอินแล้ว';
                     document.getElementById('todayStatus').style.color = '#4CAF50';
                     document.getElementById('checkoutBtn').disabled = false;
-                    
                     showMessage('✅ เช็คอินสำเร็จ! ขอให้มีความสุขกับการทำงาน!', 'success');
                     updateTodayLogsDisplay();
                     showNotification('บันทึกการเช็คอินเรียบร้อย!');
                     updateConnectionStatus('ออนไลน์', true);
-                    
                 } else {
                     throw new Error(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
                 }
-
             } catch (error) {
                 console.error('Check-in failed:', error);
                 showMessage('❌ เช็คอินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
                 updateConnectionStatus('มีปัญหา', false);
-                
-                // Fallback: บันทึกใน localStorage เฉพาะกรณีที่เครือข่ายมีปัญหา
                 if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                    const now = new Date();
                     const attendanceData = {
                         name: getCurrentUserName(),
                         employeeId: getCurrentUserId(),
                         status: 'เช็คอิน',
                         lat: currentLocation ? currentLocation.lat : null,
                         lng: currentLocation ? currentLocation.lng : null,
-                        address: document.getElementById('locationInfo').querySelector('span').textContent,
+                        address: locationText,
                         timestamp: now.toISOString(),
                         synced: false
                     };
-                    
                     saveToLocalStorage(attendanceData);
-                    
                     isCheckedIn = true;
                     checkInTime = now;
-                    
                     document.getElementById('todayStatus').textContent = 'เช็คอินแล้ว (รอซิงค์)';
                     document.getElementById('todayStatus').style.color = '#ff9800';
                     document.getElementById('checkoutBtn').disabled = false;
-                    
-                    showMessage('⚠️ เช็คอินสำเร็จ แต่ยังไม่ได้ซิงค์ข้อมูล จะทำการซิงค์เมื่อเชื่อมต่ออินเทอร์เน็ตแล้ว', 'warning');
+                    showMessage('⚠️ เช็คอินสำเร็จ แต่ยังไม่ได้ซิงค์ข้อมูล จะทำการซิงค์เมื่อเชื่อมต่ออินเทอร์เนตแล้ว', 'warning');
                     updateTodayLogsDisplay();
                 }
-                
             } finally {
                 btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
 
         async function checkOut() {
             if (!currentUser || !checkLocationValidity()) return;
-            
             const btn = document.getElementById('checkoutBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<div class="loading"></div> กำลังเช็คเอาท์...';
@@ -1166,10 +1043,8 @@ async function loadEmployees() {
 
             try {
                 const now = new Date();
-                const workHours = isCheckedIn && checkInTime ? 
-                    (now - checkInTime) / (1000 * 60 * 60) : 0;
+                const workHours = isCheckedIn && checkInTime ? (now - checkInTime) / (1000 * 60 * 60) : 0;
                 const locationText = document.getElementById('locationInfo').querySelector('span').textContent;
-                
                 const attendanceData = {
                     name: getCurrentUserName(),
                     employeeId: getCurrentUserId(),
@@ -1181,12 +1056,9 @@ async function loadEmployees() {
                     workHours: workHours.toFixed(2)
                 };
 
-                // ส่งข้อมูลไป Google Sheets
                 const response = await fetch(CONFIG.SCRIPT_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(attendanceData)
                 });
 
@@ -1195,72 +1067,55 @@ async function loadEmployees() {
                 }
 
                 const result = await response.json();
-                
                 if (result.result === 'success') {
-                    // บันทึกใน localStorage
                     saveToLocalStorage(attendanceData);
-                    
                     isCheckedIn = false;
                     checkInTime = null;
-                    
                     document.getElementById('todayStatus').textContent = 'ทำงาน ' + workHours.toFixed(1) + ' ชม.';
                     document.getElementById('todayStatus').style.color = '#7CB342';
                     document.getElementById('checkinBtn').disabled = false;
                     document.getElementById('workHours').textContent = workHours.toFixed(1) + ' ชั่วโมง';
-                    
                     const isOvertime = workHours > CONFIG.OVERTIME_THRESHOLD;
-                    const message = isOvertime ? 
-                        '🎉 เช็คเอาท์สำเร็จ! คุณทำงาน ' + workHours.toFixed(1) + ' ชั่วโมง (ล่วงเวลา ' + (workHours - CONFIG.OVERTIME_THRESHOLD).toFixed(1) + ' ชม.)' :
-                        '✅ เช็คเอาท์สำเร็จ! คุณทำงาน ' + workHours.toFixed(1) + ' ชั่วโมงวันนี้';
-                    
+                    const message = isOvertime
+                        ? `🎉 เช็คเอาท์สำเร็จ! คุณทำงาน ${workHours.toFixed(1)} ชั่วโมง (ล่วงเวลา ${(workHours - CONFIG.OVERTIME_THRESHOLD).toFixed(1)} ชม.)`
+                        : `✅ เช็คเอาท์สำเร็จ! คุณทำงาน ${workHours.toFixed(1)} ชั่วโมงวันนี้`;
                     showMessage(message, 'success');
                     updateTodayLogsDisplay();
                     showNotification('บันทึกการเช็คเอาท์เรียบร้อย!');
                     updateConnectionStatus('ออนไลน์', true);
-                    
                 } else {
                     throw new Error(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
                 }
-
             } catch (error) {
                 console.error('Check-out failed:', error);
                 showMessage('❌ เช็คเอาท์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
                 updateConnectionStatus('มีปัญหา', false);
-                
-                // Fallback: บันทึกใน localStorage เฉพาะกรณีที่เครือข่ายมีปัญหา
                 if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                    const now = new Date();
-                    const workHours = isCheckedIn && checkInTime ? 
-                        (now - checkInTime) / (1000 * 60 * 60) : 0;
-                    
+                    const workHours = isCheckedIn && checkInTime ? (now - checkInTime) / (1000 * 60 * 60) : 0;
                     const attendanceData = {
                         name: getCurrentUserName(),
                         employeeId: getCurrentUserId(),
                         status: 'เช็คเอาท์',
                         lat: currentLocation ? currentLocation.lat : null,
                         lng: currentLocation ? currentLocation.lng : null,
-                        address: document.getElementById('locationInfo').querySelector('span').textContent,
+                        address: locationText,
                         timestamp: now.toISOString(),
                         workHours: workHours.toFixed(2),
                         synced: false
                     };
-                    
                     saveToLocalStorage(attendanceData);
-                    
                     isCheckedIn = false;
                     checkInTime = null;
-                    
                     document.getElementById('todayStatus').textContent = 'ทำงาน ' + workHours.toFixed(1) + ' ชม. (รอซิงค์)';
                     document.getElementById('todayStatus').style.color = '#ff9800';
                     document.getElementById('checkinBtn').disabled = false;
                     document.getElementById('workHours').textContent = workHours.toFixed(1) + ' ชั่วโมง';
-                    
-                    showMessage('⚠️ เช็คเอาท์สำเร็จ แต่ยังไม่ได้ซิงค์ข้อมูล จะทำการซิงค์เมื่อเชื่อมต่ออินเทอร์เน็ตแล้ว', 'warning');
+                    showMessage('⚠️ เช็คเอาท์สำเร็จ แต่ยังไม่ได้ซิงค์ข้อมูล จะทำการซิงค์เมื่อเชื่อมต่ออินเทอร์เนตแล้ว', 'warning');
                     updateTodayLogsDisplay();
                 }
-                
             } finally {
                 btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
 
@@ -1268,14 +1123,9 @@ async function loadEmployees() {
             const today = new Date().toDateString();
             const userKey = getCurrentUserId() + '_' + today;
             const savedLogs = JSON.parse(localStorage.getItem('todayLogs') || '{}');
-            
-            if (!savedLogs[userKey]) {
-                savedLogs[userKey] = [];
-            }
-            
+            if (!savedLogs[userKey]) savedLogs[userKey] = [];
             savedLogs[userKey].push(attendanceData);
             todayLogs = savedLogs[userKey];
-            
             localStorage.setItem('todayLogs', JSON.stringify(savedLogs));
         }
 
@@ -1285,10 +1135,7 @@ async function loadEmployees() {
                 messageEl.textContent = message;
                 messageEl.className = 'status-message status-' + type;
                 messageEl.style.display = 'block';
-                
-                setTimeout(function() {
-                    messageEl.style.display = 'none';
-                }, 8000);
+                setTimeout(() => { messageEl.style.display = 'none'; }, 8000);
             }
         }
 
@@ -1296,93 +1143,65 @@ async function loadEmployees() {
             const notification = document.createElement('div');
             notification.className = 'notification';
             notification.innerHTML = '<strong>✅ สำเร็จ</strong><br>' + message;
-            
             document.body.appendChild(notification);
-            
-            setTimeout(function() { notification.classList.add('show'); }, 100);
-            setTimeout(function() {
+            setTimeout(() => { notification.classList.add('show'); }, 100);
+            setTimeout(() => {
                 notification.classList.remove('show');
-                setTimeout(function() {
-                    if (document.body.contains(notification)) {
-                        document.body.removeChild(notification);
-                    }
+                setTimeout(() => {
+                    if (document.body.contains(notification)) document.body.removeChild(notification);
                 }, 300);
             }, 3000);
         }
 
         function switchTab(tabName) {
             const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach(function(tab) { tab.classList.remove('active'); });
-            
-            const activeTab = document.querySelector('[onclick="switchTab(\'' + tabName + '\')"]');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            const activeTab = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
             if (activeTab) activeTab.classList.add('active');
-            
             const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(function(content) { content.classList.remove('active'); });
-            
-            const activeContent = document.getElementById(tabName + '-tab');
+            contents.forEach(content => content.classList.remove('active'));
+            const activeContent = document.getElementById(`${tabName}-tab`);
             if (activeContent) activeContent.classList.add('active');
         }
 
-        // Handle network status
-        window.addEventListener('online', function() {
+        window.addEventListener('online', () => {
             showNotification('✅ กลับมาออนไลน์แล้ว! กำลังตรวจสอบการเชื่อมต่อ...');
             testConnection();
             syncPendingData();
         });
 
-        window.addEventListener('offline', function() {
-            showMessage('⚠️ คุณออฟไลน์อยู่ ข้อมูลจะซิงค์เมื่อเชื่อมต่ออินเทอร์เน็ตแล้ว', 'warning');
+        window.addEventListener('offline', () => {
+            showMessage('⚠️ คุณออฟไลน์อยู่ ข้อมูลจะซิงค์เมื่อเชื่อมต่ออินเทอร์เนตแล้ว', 'warning');
             updateConnectionStatus('ออฟไลน์', false);
         });
 
-        // ซิงค์ข้อมูลที่รอการส่ง
         function syncPendingData() {
             const savedLogs = JSON.parse(localStorage.getItem('todayLogs') || '{}');
             let hasPendingData = false;
-            
-            for (var userKey in savedLogs) {
+            for (let userKey in savedLogs) {
                 const logs = savedLogs[userKey];
-                for (var i = 0; i < logs.length; i++) {
+                for (let i = 0; i < logs.length; i++) {
                     const log = logs[i];
                     if (log.synced === false) {
                         hasPendingData = true;
-                        try {
-                            const syncData = {};
-                            for (var key in log) {
-                                if (key !== 'synced') {
-                                    syncData[key] = log[key];
-                                }
+                        const syncData = { ...log };
+                        delete syncData.synced;
+                        fetch(CONFIG.SCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(syncData)
+                        }).then(response => {
+                            if (response.ok) {
+                                log.synced = true;
+                                localStorage.setItem('todayLogs', JSON.stringify(savedLogs));
                             }
-                            
-                            fetch(CONFIG.SCRIPT_URL, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(syncData)
-                            }).then(function(response) {
-                                if (response.ok) {
-                                    log.synced = true;
-                                    localStorage.setItem('todayLogs', JSON.stringify(savedLogs));
-                                }
-                            }).catch(function(error) {
-                                console.error('Sync failed for log:', log, error);
-                            });
-                            
-                        } catch (error) {
-                            console.error('Sync failed for log:', log, error);
-                        }
+                        }).catch(error => console.error('Sync failed for log:', log, error));
                     }
                 }
             }
-            
-            if (hasPendingData) {
-                showNotification('📤 ซิงค์ข้อมูลที่รอการส่งเรียบร้อย!');
-            }
+            if (hasPendingData) showNotification('📤 ซิงค์ข้อมูลที่รอการส่งเรียบร้อย!');
         }
 
-        // ตรวจสอบการเชื่อมต่อทุก 30 วินาที
         setInterval(testConnection, 30000);
     </script>
 </body>
