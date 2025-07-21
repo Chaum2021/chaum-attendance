@@ -1203,6 +1203,13 @@
         }
 
         setInterval(testConnection, 30000);
-    </script>
+    
+// ✅ เรียก loadEmployees() อย่างถูกต้อง
+async function startApp() {
+  await loadEmployees();
+}
+startApp();
+
+</script>
 </body>
 </html>
