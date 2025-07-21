@@ -631,7 +631,7 @@
         const CONFIG = {
             // Google Apps Script URL - ใส่ URL ของ Google Apps Script ของคุณที่นี่
             // ตัวอย่าง: 'https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec'
-            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbys2vJGE4DYPD4LmVz6nStqioirOlo6rBIj1y0mwkyW1Jt0_aSnAL_J-OlA8znZ4pt9/exec',
+            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbztirBp-1KsrLIg2pm3Bprky-aBJKN5obLRgHfCwPt-j0533RbDNvirJho_wL9FvTpq/exec',
             
             // Company Information
             COMPANY_NAME: 'บริษัท ชอุ่ม 2021 จำกัด',
@@ -696,15 +696,56 @@
             }
         }
 
-        async function loadEmployees() {
-            try {
-                showMessage('กำลังโหลดข้อมูลพนักงาน...', 'warning');
-                
-                const response = await fetch(CONFIG.SCRIPT_URL);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+        
+async function loadEmployees() {
+    try {
+        showMessage('กำลังโหลดข้อมูลพนักงาน...', 'warning');
+
+        const response = await fetch(CONFIG.SCRIPT_URL);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const raw = await response.json();
+
+        // ✅ ป้องกันไม่ให้ error: แปลง Object ที่ได้จาก Google Apps Script เป็น Array
+        employees = Array.isArray(raw)
+            ? raw
+            : typeof raw === 'object'
+                ? Object.values(raw)
+                : [];
+
+        if (!Array.isArray(employees)) throw new Error("ข้อมูลพนักงานไม่อยู่ในรูปแบบ array");
+
+        populateEmployeeSelect();
+        showMessage('โหลดข้อมูลพนักงานสำเร็จ', 'success');
+        updateConnectionStatus('ออนไลน์', true);
+
+    } catch (error) {
+        console.error('Failed to load employees:', error);
+        showMessage('ไม่สามารถโหลดข้อมูลพนักงานได้ กรุณาลองใหม่อีกครั้ง', 'error');
+        updateConnectionStatus('ออฟไลน์', false);
+
+        // Fallback demo
+        employees = [
+            {
+                'ชื่อ-นามสกุล': 'สมชาย ใจดี',
+                'รหัสพนักงาน': 'EMP001',
+                'แผนก': 'ไอที',
+                'PIN': '1234'
+            },
+            {
+                'ชื่อ-นามสกุล': 'สมหญิง รักงาน',
+                'รหัสพนักงาน': 'EMP002',
+                'แผนก': 'บัญชี',
+                'PIN': '5678'
+            }
+        ];
+        populateEmployeeSelect();
+    }
+}
+
                 
                 const data = await response.json();
                 employees = data;
