@@ -1623,6 +1623,33 @@ function loadEmployees() {
 
             setTimeout(() => {
                 saveAttendanceRecord(record);
+if (record.status === 'เช็คอิน') {
+            fetch('https://script.google.com/macros/s/AKfycbxyo3e_eVDPC6CQ-73TZBUIIygqapT-YXjaGFm9f9ene1YtbNJf_SOo2gXZ_etUscFj/exec', {
+                method: 'POST',
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    name: currentUser.name,
+                    employeeId: currentUser.employeeId,
+                    status: 'เช็คอิน',
+                    lat: currentLocation?.lat,
+                    lng: currentLocation?.lng,
+                    address: document.getElementById('locationInfo').innerText || ''
+                })
+            });
+} else {
+            fetch('https://script.google.com/macros/s/AKfycbxyo3e_eVDPC6CQ-73TZBUIIygqapT-YXjaGFm9f9ene1YtbNJf_SOo2gXZ_etUscFj/exec', {
+                method: 'POST',
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    name: currentUser.name,
+                    employeeId: currentUser.employeeId,
+                    status: 'เช็คเอาท์',
+                    lat: currentLocation?.lat,
+                    lng: currentLocation?.lng,
+                    address: document.getElementById('locationInfo').innerText || ''
+                })
+            });
+}
                 currentUserLogs.push(record);
                 isCheckedIn = true;
                 checkInTime = now;
@@ -1666,6 +1693,33 @@ function loadEmployees() {
 
             setTimeout(() => {
                 saveAttendanceRecord(record);
+if (record.status === 'เช็คอิน') {
+            fetch('https://script.google.com/macros/s/AKfycbxyo3e_eVDPC6CQ-73TZBUIIygqapT-YXjaGFm9f9ene1YtbNJf_SOo2gXZ_etUscFj/exec', {
+                method: 'POST',
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    name: currentUser.name,
+                    employeeId: currentUser.employeeId,
+                    status: 'เช็คอิน',
+                    lat: currentLocation?.lat,
+                    lng: currentLocation?.lng,
+                    address: document.getElementById('locationInfo').innerText || ''
+                })
+            });
+} else {
+            fetch('https://script.google.com/macros/s/AKfycbxyo3e_eVDPC6CQ-73TZBUIIygqapT-YXjaGFm9f9ene1YtbNJf_SOo2gXZ_etUscFj/exec', {
+                method: 'POST',
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    name: currentUser.name,
+                    employeeId: currentUser.employeeId,
+                    status: 'เช็คเอาท์',
+                    lat: currentLocation?.lat,
+                    lng: currentLocation?.lng,
+                    address: document.getElementById('locationInfo').innerText || ''
+                })
+            });
+}
                 currentUserLogs.push(record);
                 isCheckedIn = false;
                 checkInTime = null;
