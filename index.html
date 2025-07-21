@@ -1296,31 +1296,39 @@
         });
 
         // ซิงค์ข้อมูลที่รอการส่ง
-        async function syncPendingData() {
+        function syncPendingData() {
             const savedLogs = JSON.parse(localStorage.getItem('todayLogs') || '{}');
             let hasPendingData = false;
             
-            for (const userKey in savedLogs) {
+            for (var userKey in savedLogs) {
                 const logs = savedLogs[userKey];
-                for (const log of logs) {
+                for (var i = 0; i < logs.length; i++) {
+                    const log = logs[i];
                     if (log.synced === false) {
                         hasPendingData = true;
                         try {
-                            const syncData = Object.assign({}, log);
-                            delete syncData.synced;
+                            const syncData = {};
+                            for (var key in log) {
+                                if (key !== 'synced') {
+                                    syncData[key] = log[key];
+                                }
+                            }
                             
-                            const resp
-                              onse = await fetch(CONFIG.SCRIPT_URL, {
+                            fetch(CONFIG.SCRIPT_URL, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                 },
                                 body: JSON.stringify(syncData)
+                            }).then(function(response) {
+                                if (response.ok) {
+                                    log.synced = true;
+                                    localStorage.setItem('todayLogs', JSON.stringify(savedLogs));
+                                }
+                            }).catch(function(error) {
+                                console.error('Sync failed for log:', log, error);
                             });
                             
-                            if (response.ok) {
-                                log.synced = true;
-                            }
                         } catch (error) {
                             console.error('Sync failed for log:', log, error);
                         }
@@ -1329,7 +1337,6 @@
             }
             
             if (hasPendingData) {
-                localStorage.setItem('todayLogs', JSON.stringify(savedLogs));
                 showNotification('📤 ซิงค์ข้อมูลที่รอการส่งเรียบร้อย!');
             }
         }
