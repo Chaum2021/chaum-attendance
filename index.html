@@ -750,10 +750,10 @@
                 return;
             }
 
-            if (!pin) {
-                showMessage('❌ กรุณาใส่รหัส PIN', 'error');
-                return;
-            }
+            if (pin === correctPin) {
+    alert("เข้าสู่ระบบสำเร็จ");
+    window.location.href = "checkin.html"; // ← เปลี่ยนเป็นหน้าที่ต้องการไปต่อ
+}
 
             const employee = employees[selectedIndex];
             if (!employee) {
