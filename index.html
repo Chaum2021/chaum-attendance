@@ -159,6 +159,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Employee Section Styles */
         .employee-section {
             text-align: center;
         }
@@ -463,6 +464,7 @@
             transform: translateX(0);
         }
 
+        /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .app-container {
                 margin: 10px;
@@ -526,8 +528,8 @@
     <div class="app-container">
         <div class="header">
             <div class="status-indicator">
-                <div class="status-dot" id="statusDot"></div>
-                <span id="connectionStatus">กำลังเชื่อมต่อ...</span>
+                <div class="status-dot"></div>
+                <span>ออนไลน์</span>
             </div>
             <div class="company-logo">
                 <div class="logo-container">
@@ -546,17 +548,25 @@
             <button class="nav-tab active" onclick="switchTab('employee')">📱 พนักงาน</button>
         </div>
 
+        <!-- Employee Tab -->
         <div id="employee-tab" class="tab-content active">
             <div class="employee-section">
+                <!-- Employee Login/Selection -->
                 <div class="employee-login" id="employeeLogin">
                     <h2>👤 เลือกพนักงาน</h2>
                     <select id="employeeSelect">
-                        <option value="">-- กำลังโหลดข้อมูลพนักงาน --</option>
+                        <option value="">-- เลือกพนักงาน --</option>
                     </select>
                     <input type="password" id="employeePin" placeholder="รหัส PIN (4 หลัก)" maxlength="4" />
                     <button class="btn btn-checkin" onclick="employeeLogin()">🔑 เข้าสู่ระบบ</button>
+                    <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 10px; font-size: 0.9rem;">
+                        <strong>ข้อมูลทดสอบ:</strong><br>
+                        สมชาย ใจดี - PIN: 1234<br>
+                        สมหญิง รักงาน - PIN: 5678
+                    </div>
                 </div>
 
+                <!-- Employee Interface -->
                 <div class="employee-interface" id="employeeInterface">
                     <div class="employee-card">
                         <div class="employee-avatar" id="employeeAvatar">--</div>
@@ -614,7 +624,7 @@
                     </div>
 
                     <div style="text-align: center; margin-top: 30px;">
-                        <button class="btn btn-checkout" onclick="logoutEmployee()">🚪 ออกจากระบบ</button>
+                        <button class="btn-checkin" onclick="logoutEmployee()">🚪 ออกจากระบบ</button>
                     </div>
                 </div>
             </div>
@@ -622,147 +632,124 @@
     </div>
 
     <script>
-        // Configuration
+        // Configuration - ใส่ URL ของ Google Apps Script ที่นี่
         const CONFIG = {
-            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwaRshpzqYqam6FoMgQasFVdMWeye6CJ1TSYsAeolhagHZglKmj6DBy7rt4Irg1adNL/exec',
+            // *** สำคัญ: ใส่ URL ของ Google Apps Script Web App ที่นี่ ***
+            GOOGLE_APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwaRshpzqYqam6FoMgQasFVdMWeye6CJ1TSYsAeolhagHZglKmj6DBy7rt4Irg1adNL/exec',
+            
             COMPANY_NAME: 'บริษัท ชอุ่ม 2021 จำกัด',
             COMPANY_NAME_EN: 'Chaum 2021 Co., Ltd.',
-            COMPANY_SHORT_NAME: 'ชอุ่ม',
             COMPANY_SUBTITLE: 'เทคโนโลยี • คุณภาพ • ความไว้วางใจ',
+            
             OFFICE_LAT: 16.38648,
             OFFICE_LNG: 102.83138,
-            OFFICE_RADIUS: 50,
+            OFFICE_RADIUS: 300,
+            
             WORK_START_TIME: '08:45',
             WORK_END_TIME: '16:30',
             OVERTIME_THRESHOLD: 8
         };
 
+        // Global variables
         let currentUser = null;
         let currentLocation = null;
-        let employees = [];
         let isCheckedIn = false;
         let checkInTime = null;
-        let todayLogs = [];
+        let employees = [];
 
+        // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
             updateClock();
             setInterval(updateClock, 1000);
-            loadEmployees();
+            loadEmployeesFromAPI();
         });
 
-        function initializeApp() {
-            updateConnectionStatus('กำลังเชื่อมต่อ...', false);
-            testConnection();
-        }
-
-        async function testConnection() {
-            try {
-                const response = await fetch(CONFIG.SCRIPT_URL);
-                if (response.ok) {
-                    updateConnectionStatus('ออนไลน์', true);
-                } else {
-                    updateConnectionStatus('ออฟไลน์', false);
-                }
-            } catch (error) {
-                console.error('Connection test failed:', error);
-                updateConnectionStatus('ออฟไลน์', false);
-            }
-        }
-
-        function updateConnectionStatus(status, isOnline) {
-            const statusText = document.getElementById('connectionStatus');
-            const statusDot = document.getElementById('statusDot');
-            if (statusText) statusText.textContent = status;
-            if (statusDot) {
-                statusDot.style.background = isOnline ? '#4CAF50' : '#f44336';
-                statusDot.style.animation = isOnline ? 'pulse 2s infinite' : 'none';
-            }
-        }
-
-        async function loadEmployees() {
+        // Load employees from Google Apps Script
+        async function loadEmployeesFromAPI() {
             try {
                 showMessage('กำลังโหลดข้อมูลพนักงาน...', 'warning');
-
-                const response = await fetch(CONFIG.SCRIPT_URL);
+                
+                const response = await fetch(CONFIG.GOOGLE_APPS_SCRIPT_URL, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const raw = await response.json();
-
-                employees = Array.isArray(raw)
-                    ? raw
-                    : Array.isArray(raw.data)
-                        ? raw.data
-                        : typeof raw === 'object'
-                            ? Object.values(raw)
-                            : [];
-
-                if (!Array.isArray(employees) || employees.length === 0) {
-                    throw new Error("ข้อมูลพนักงานไม่อยู่ในรูปแบบ array หรือไม่มีข้อมูล");
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    employees = data.map(emp => ({
+                        id: emp['รหัสพนักงาน'] || emp.employeeId,
+                        name: emp['ชื่อ-นามสกุล'] || emp.name,
+                        employeeId: emp['รหัสพนักงาน'] || emp.employeeId,
+                        department: emp['แผนก'] || emp.department,
+                        pin: emp['PIN'] || emp.pin,
+                        avatar: generateAvatar(emp['ชื่อ-นามสกุล'] || emp.name)
+                    }));
+                    
+                    populateEmployeeSelect();
+                    showMessage('โหลดข้อมูลพนักงานสำเร็จ!', 'success');
+                    console.log('Loaded employees:', employees);
+                } else {
+                    throw new Error('ข้อมูลที่ได้รับไม่ถูกต้อง');
                 }
 
-                populateEmployeeSelect();
-                showMessage('โหลดข้อมูลพนักงานสำเร็จ', 'success');
-                updateConnectionStatus('ออนไลน์', true);
-
             } catch (error) {
-                console.error('Failed to load employees:', error);
-                showMessage('ไม่สามารถโหลดข้อมูลพนักงานได้ กรุณาลองใหม่อีกครั้ง', 'error');
-                updateConnectionStatus('ออฟไลน์', false);
-
+                console.error('Error loading employees:', error);
+                showMessage(`❌ ไม่สามารถโหลดข้อมูลพนักงานได้: ${error.message}`, 'error');
+                
+                // Fallback to sample data
                 employees = [
-                    { 'ชื่อ-นามสกุล': 'สมชาย ใจดี', 'รหัสพนักงาน': 'EMP001', 'แผนก': 'ไอที', 'PIN': '1234' },
-                    { 'ชื่อ-นามสกุล': 'สมหญิง รักงาน', 'รหัสพนักงาน': 'EMP002', 'แผนก': 'บัญชี', 'PIN': '5678' }
+                    { id: 'EMP001', name: 'สมชาย ใจดี', employeeId: 'EMP001', department: 'ไอที', pin: '1234', avatar: 'สม' },
+                    { id: 'EMP002', name: 'สมหญิง รักงาน', employeeId: 'EMP002', department: 'บัญชี', pin: '5678', avatar: 'สร' },
+                    { id: 'EMP003', name: 'สมปอง ขยันทำงาน', employeeId: 'EMP003', department: 'การตลาด', pin: '9999', avatar: 'สข' }
                 ];
                 populateEmployeeSelect();
+                showMessage('ใช้ข้อมูลตัวอย่างแทน', 'warning');
+            }
+        }
+
+        function generateAvatar(name) {
+            if (!name) return '--';
+            const words = name.split(' ');
+            if (words.length >= 2) {
+                return words[0].charAt(0) + words[1].charAt(0);
+            } else {
+                return name.substring(0, 2);
             }
         }
 
         function populateEmployeeSelect() {
             const select = document.getElementById('employeeSelect');
-            if (!select) return;
-
-            if (!Array.isArray(employees) || employees.length === 0) {
-                select.innerHTML = '<option value="">-- ไม่พบข้อมูลพนักงาน --</option>';
-                return;
-            }
-
-            select.innerHTML = '<option value="">-- เลือกพนักงาน --</option>';
-            employees.forEach((emp, index) => {
-                const name = emp['ชื่อ-นามสกุล'] || emp.name || 'ไม่ระบุชื่อ';
-                const empId = emp['รหัสพนักงาน'] || emp.employeeId || `EMP${index + 1}`;
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = `${name} (${empId})`;
-                select.appendChild(option);
-            });
+            select.innerHTML = '<option value="">-- เลือกพนักงาน --</option>' +
+                employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.employeeId})</option>`).join('');
         }
 
+        // Employee login
         function employeeLogin() {
-            const selectedIndex = document.getElementById('employeeSelect').value;
+            const selectedId = document.getElementById('employeeSelect').value;
             const pin = document.getElementById('employeePin').value;
 
-            if (!selectedIndex && selectedIndex !== '0') {
+            if (!selectedId) {
                 showMessage('❌ กรุณาเลือกพนักงาน', 'error');
                 return;
             }
 
-            if (pin === correctPin) {
-    alert("เข้าสู่ระบบสำเร็จ");
-    window.location.href = "checkin.html"; // ← เปลี่ยนเป็นหน้าที่ต้องการไปต่อ
-}
+            if (!pin) {
+                showMessage('❌ กรุณาใส่รหัส PIN', 'error');
+                return;
+            }
 
-            const employee = employees[selectedIndex];
+            const employee = employees.find(emp => emp.id === selectedId);
             if (!employee) {
                 showMessage('❌ ไม่พบข้อมูลพนักงาน', 'error');
                 return;
             }
 
-            const correctPin = employee.PIN || employee.pin || '0000';
-            if (pin !== correctPin) {
+            if (employee.pin !== pin) {
                 showMessage('❌ รหัส PIN ไม่ถูกต้อง', 'error');
                 return;
             }
@@ -771,48 +758,30 @@
             setupUserInterface();
             document.getElementById('employeeLogin').style.display = 'none';
             document.getElementById('employeeInterface').style.display = 'block';
-            showNotification('ยินดีต้อนรับ ' + getCurrentUserName() + '!');
-        }
-
-        function getCurrentUserName() {
-            return currentUser['ชื่อ-นามสกุล'] || currentUser.name || 'พนักงาน';
-        }
-
-        function getCurrentUserId() {
-            return currentUser['รหัสพนักงาน'] || currentUser.employeeId || 'EMP000';
-        }
-
-        function getCurrentUserDept() {
-            return currentUser['แผนก'] || currentUser.department || 'ไม่ระบุแผนก';
+            
+            showNotification(`ยินดีต้อนรับ ${employee.name}!`);
         }
 
         function logoutEmployee() {
             currentUser = null;
             isCheckedIn = false;
             checkInTime = null;
-            todayLogs = [];
+            
             document.getElementById('employeeLogin').style.display = 'block';
             document.getElementById('employeeInterface').style.display = 'none';
             document.getElementById('employeeSelect').value = '';
             document.getElementById('employeePin').value = '';
+            
             showNotification('ออกจากระบบเรียบร้อย!');
         }
 
         function setupUserInterface() {
-            const name = getCurrentUserName();
-            const empId = getCurrentUserId();
-            const dept = getCurrentUserDept();
-            document.getElementById('employeeName').textContent = name;
-            document.getElementById('employeeId').textContent = empId;
-            document.getElementById('employeeDept').textContent = dept;
-            document.getElementById('employeeAvatar').textContent = generateAvatar(name);
+            document.getElementById('employeeName').textContent = currentUser.name;
+            document.getElementById('employeeId').textContent = currentUser.employeeId;
+            document.getElementById('employeeDept').textContent = currentUser.department;
+            document.getElementById('employeeAvatar').textContent = currentUser.avatar;
             getCurrentLocation();
             checkTodayStatus();
-        }
-
-        function generateAvatar(name) {
-            const words = name.split(' ');
-            return words.length >= 2 ? words[0].charAt(0) + words[1].charAt(0) : name.substring(0, 2);
         }
 
         function getCurrentLocation() {
@@ -821,21 +790,27 @@
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    function(position) {
+                    position => {
                         currentLocation = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
                             accuracy: position.coords.accuracy,
                             timestamp: Date.now()
                         };
-                        reverseGeocode(currentLocation.lat, currentLocation.lng);
+                        
+                        const mockAddress = `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)} - ขอนแก่น, ประเทศไทย`;
+                        updateLocationDisplay(mockAddress);
                         checkLocationValidity();
                     },
-                    function(error) {
+                    error => {
                         locationInfo.innerHTML = '<div class="location-icon" style="background: #f44336;"></div><span>ไม่สามารถเข้าถึงตำแหน่ง</span>';
                         handleLocationError(error);
                     },
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+                    { 
+                        enableHighAccuracy: true, 
+                        timeout: 15000, 
+                        maximumAge: 60000 
+                    }
                 );
             } else {
                 locationInfo.innerHTML = '<div class="location-icon" style="background: #f44336;"></div><span>ไม่รองรับการหาตำแหน่ง</span>';
@@ -845,42 +820,54 @@
         function handleLocationError(error) {
             let message = '';
             switch(error.code) {
-                case error.PERMISSION_DENIED: message = "ผู้ใช้ปฏิเสธการเข้าถึงตำแหน่ง"; break;
-                case error.POSITION_UNAVAILABLE: message = "ไม่สามารถหาตำแหน่งได้"; break;
-                case error.TIMEOUT: message = "หมดเวลาในการค้นหาตำแหน่ง"; break;
-                default: message = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"; break;
+                case error.PERMISSION_DENIED:
+                    message = "ผู้ใช้ปฏิเสธการเข้าถึงตำแหน่ง";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = "ไม่สามารถหาตำแหน่งได้";
+                    break;
+                case error.TIMEOUT:
+                    message = "หมดเวลาในการค้นหาตำแหน่ง";
+                    break;
+                default:
+                    message = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+                    break;
             }
             showMessage(message, 'error');
         }
 
-        function reverseGeocode(lat, lng) {
-            const mockAddress = `${lat.toFixed(4)}, ${lng.toFixed(4)} - ขอนแก่น, ประเทศไทย`;
-            updateLocationDisplay(mockAddress);
-        }
-
         function updateLocationDisplay(address) {
             document.getElementById('locationInfo').innerHTML = 
-                '<div class="location-icon"></div><span>' + address + '</span>';
+                `<div class="location-icon"></div><span>${address}</span>`;
         }
 
         function checkLocationValidity() {
             if (!currentLocation) return false;
+            
             const distance = calculateDistance(
                 currentLocation.lat, currentLocation.lng,
                 CONFIG.OFFICE_LAT, CONFIG.OFFICE_LNG
             );
+            
             const isValid = distance <= CONFIG.OFFICE_RADIUS;
-            const checkinBtn = document.getElementById('checkinBtn');
-            const checkoutBtn = document.getElementById('checkoutBtn');
+            const buttons = document.querySelectorAll('.btn');
+            
             if (!isValid) {
-                if (!isCheckedIn) checkinBtn.disabled = true;
-                if (isCheckedIn) checkoutBtn.disabled = true;
+                buttons.forEach(btn => {
+                    if (btn.id === 'checkinBtn' || btn.id === 'checkoutBtn') {
+                        btn.disabled = true;
+                    }
+                });
                 showMessage(`⚠️ คุณอยู่ห่างจากสำนักงาน ${Math.round(distance)} เมตร กรุณาเข้าใกล้ให้อยู่ในรัศมี ${CONFIG.OFFICE_RADIUS} เมตร`, 'warning');
             } else {
-                if (!isCheckedIn) checkinBtn.disabled = false;
-                if (isCheckedIn) checkoutBtn.disabled = false;
+                buttons.forEach(btn => {
+                    if (btn.id === 'checkinBtn' || btn.id === 'checkoutBtn') {
+                        btn.disabled = false;
+                    }
+                });
                 showMessage(`✅ ตำแหน่งถูกต้อง คุณอยู่ห่างจากสำนักงาน ${Math.round(distance)} เมตร`, 'success');
             }
+            
             return isValid;
         }
 
@@ -890,17 +877,30 @@
             const φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180;
             const Δλ = (lng2-lng1) * Math.PI/180;
+
             const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
                     Math.cos(φ1) * Math.cos(φ2) *
                     Math.sin(Δλ/2) * Math.sin(Δλ/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
             return R * c;
         }
 
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('th-TH', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateString = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeString = now.toLocaleTimeString('th-TH', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            const dateString = now.toLocaleDateString('th-TH', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
             const timeElement = document.getElementById('currentTime');
             if (timeElement) {
                 timeElement.textContent = `${timeString} • ${dateString}`;
@@ -914,19 +914,21 @@
                 const workTime = (now - checkInTime) / (1000 * 60 * 60);
                 const workHoursElement = document.getElementById('workHours');
                 if (workHoursElement) {
-                    workHoursElement.textContent = workTime.toFixed(1) + ' ชั่วโมง';
+                    workHoursElement.textContent = `${workTime.toFixed(1)} ชั่วโมง`;
                 }
             }
         }
 
         function checkTodayStatus() {
+            if (!currentUser) return;
+            
             const today = new Date().toDateString();
-            const userKey = getCurrentUserId() + '_' + today;
-            const savedLogs = JSON.parse(localStorage.getItem('todayLogs') || '{}');
-            const userLogs = savedLogs[userKey] || [];
-            todayLogs = userLogs;
-            const lastCheckIn = userLogs.filter(log => log.status === 'เช็คอิน').pop();
-            const lastCheckOut = userLogs.filter(log => log.status === 'เช็คเอาท์').pop();
+            const records = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
+            const todayRecords = records.filter(r => r.userId === currentUser.id && r.date === today);
+            
+            const lastCheckIn = todayRecords.filter(r => r.type === 'check-in').pop();
+            const lastCheckOut = todayRecords.filter(r => r.type === 'check-out').pop();
+            
             if (lastCheckIn && (!lastCheckOut || new Date(lastCheckIn.timestamp) > new Date(lastCheckOut.timestamp))) {
                 isCheckedIn = true;
                 checkInTime = new Date(lastCheckIn.timestamp);
@@ -942,25 +944,13 @@
                 document.getElementById('checkinBtn').disabled = false;
                 document.getElementById('checkoutBtn').disabled = true;
             }
-            updateTodayLogsDisplay();
-        }
-
-        function updateTodayLogsDisplay() {
-            const logsContainer = document.getElementById('recentLogs');
-            if (!logsContainer) return;
-            if (todayLogs.length === 0) {
-                logsContainer.innerHTML = '<div class="log-entry"><div class="log-type"><span>📝</span><span>ยังไม่มีกิจกรรมในวันนี้</span></div><div class="log-time">--:--</div></div>';
-                return;
-            }
-            logsContainer.innerHTML = todayLogs.map(log => {
-                const time = new Date(log.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                const icon = log.status === 'เช็คอิน' ? '🟢' : '🔴';
-                return `<div class="log-entry"><div class="log-type"><span>${icon}</span><span>${log.status}</span></div><div class="log-time">${time}</div></div>`;
-            }).join('');
+            
+            loadTodayLogs();
         }
 
         async function checkIn() {
             if (!currentUser || !checkLocationValidity()) return;
+            
             const btn = document.getElementById('checkinBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<div class="loading"></div> กำลังเช็คอิน...';
@@ -968,74 +958,71 @@
 
             try {
                 const now = new Date();
-                const locationText = document.getElementById('locationInfo').querySelector('span').textContent;
                 const attendanceData = {
-                    name: getCurrentUserName(),
-                    employeeId: getCurrentUserId(),
+                    name: currentUser.name,
+                    employeeId: currentUser.employeeId,
                     status: 'เช็คอิน',
                     lat: currentLocation ? currentLocation.lat : null,
                     lng: currentLocation ? currentLocation.lng : null,
-                    address: locationText,
-                    timestamp: now.toISOString()
+                    address: document.getElementById('locationInfo').querySelector('span').textContent,
+                    timestamp: now.toISOString(),
+                    workHours: ''
                 };
 
-                const response = await fetch(CONFIG.SCRIPT_URL, {
+                // Send to Google Apps Script
+                const response = await fetch(CONFIG.GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(attendanceData)
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(attendanceData),
+                    mode: 'cors'
                 });
 
-                if (!response.ok) {
-                    throw new Error('HTTP error! status: ' + response.status);
-                }
-
                 const result = await response.json();
+                
                 if (result.result === 'success') {
-                    saveToLocalStorage(attendanceData);
+                    // Save locally as backup
+                    const record = {
+                        id: Date.now(),
+                        userId: currentUser.id,
+                        userName: currentUser.name,
+                        employeeId: currentUser.employeeId,
+                        type: 'check-in',
+                        timestamp: now.toISOString(),
+                        location: currentLocation,
+                        address: attendanceData.address,
+                        date: now.toDateString()
+                    };
+                    
+                    saveAttendanceRecord(record);
+                    
                     isCheckedIn = true;
                     checkInTime = now;
+                    
                     document.getElementById('todayStatus').textContent = 'เช็คอินแล้ว';
                     document.getElementById('todayStatus').style.color = '#4CAF50';
                     document.getElementById('checkoutBtn').disabled = false;
+                    
                     showMessage('✅ เช็คอินสำเร็จ! ขอให้มีความสุขกับการทำงาน!', 'success');
-                    updateTodayLogsDisplay();
+                    loadTodayLogs();
                     showNotification('บันทึกการเช็คอินเรียบร้อย!');
-                    updateConnectionStatus('ออนไลน์', true);
                 } else {
-                    throw new Error(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+                    throw new Error(result.message || 'ไม่สามารถบันทึกข้อมูลได้');
                 }
+
             } catch (error) {
-                console.error('Check-in failed:', error);
-                showMessage('❌ เช็คอินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
-                updateConnectionStatus('มีปัญหา', false);
-                if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                    const attendanceData = {
-                        name: getCurrentUserName(),
-                        employeeId: getCurrentUserId(),
-                        status: 'เช็คอิน',
-                        lat: currentLocation ? currentLocation.lat : null,
-                        lng: currentLocation ? currentLocation.lng : null,
-                        address: locationText,
-                        timestamp: now.toISOString(),
-                        synced: false
-                    };
-                    saveToLocalStorage(attendanceData);
-                    isCheckedIn = true;
-                    checkInTime = now;
-                    document.getElementById('todayStatus').textContent = 'เช็คอินแล้ว (รอซิงค์)';
-                    document.getElementById('todayStatus').style.color = '#ff9800';
-                    document.getElementById('checkoutBtn').disabled = false;
-                    showMessage('⚠️ เช็คอินสำเร็จ แต่ยังไม่ได้ซิงค์ข้อมูล จะทำการซิงค์เมื่อเชื่อมต่ออินเทอร์เนตแล้ว', 'warning');
-                    updateTodayLogsDisplay();
-                }
-            } finally {
-                btn.innerHTML = originalText;
+                console.error('Check-in error:', error);
+                showMessage(`❌ เกิดข้อผิดพลาด: ${error.message}`, 'error');
                 btn.disabled = false;
             }
+            
+            btn.innerHTML = originalText;
         }
 
         async function checkOut() {
             if (!currentUser || !checkLocationValidity()) return;
+            
             const btn = document.getElementById('checkoutBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<div class="loading"></div> กำลังเช็คเอาท์...';
@@ -1043,173 +1030,169 @@
 
             try {
                 const now = new Date();
-                const workHours = isCheckedIn && checkInTime ? (now - checkInTime) / (1000 * 60 * 60) : 0;
-                const locationText = document.getElementById('locationInfo').querySelector('span').textContent;
+                const workHours = isCheckedIn && checkInTime ? 
+                    (now - checkInTime) / (1000 * 60 * 60) : 0;
+                
                 const attendanceData = {
-                    name: getCurrentUserName(),
-                    employeeId: getCurrentUserId(),
+                    name: currentUser.name,
+                    employeeId: currentUser.employeeId,
                     status: 'เช็คเอาท์',
                     lat: currentLocation ? currentLocation.lat : null,
                     lng: currentLocation ? currentLocation.lng : null,
-                    address: locationText,
+                    address: document.getElementById('locationInfo').querySelector('span').textContent,
                     timestamp: now.toISOString(),
                     workHours: workHours.toFixed(2)
                 };
 
-                const response = await fetch(CONFIG.SCRIPT_URL, {
+                // Send to Google Apps Script
+                const response = await fetch(CONFIG.GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(attendanceData)
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(attendanceData),
+                    mode: 'cors'
                 });
 
-                if (!response.ok) {
-                    throw new Error('HTTP error! status: ' + response.status);
-                }
-
                 const result = await response.json();
+                
                 if (result.result === 'success') {
-                    saveToLocalStorage(attendanceData);
+                    // Save locally as backup
+                    const record = {
+                        id: Date.now(),
+                        userId: currentUser.id,
+                        userName: currentUser.name,
+                        employeeId: currentUser.employeeId,
+                        type: 'check-out',
+                        timestamp: now.toISOString(),
+                        location: currentLocation,
+                        address: attendanceData.address,
+                        date: now.toDateString(),
+                        workHours: workHours.toFixed(2)
+                    };
+                    
+                    saveAttendanceRecord(record);
+                    
                     isCheckedIn = false;
                     checkInTime = null;
-                    document.getElementById('todayStatus').textContent = 'ทำงาน ' + workHours.toFixed(1) + ' ชม.';
+                    
+                    document.getElementById('todayStatus').textContent = `ทำงาน ${workHours.toFixed(1)} ชม.`;
                     document.getElementById('todayStatus').style.color = '#7CB342';
                     document.getElementById('checkinBtn').disabled = false;
-                    document.getElementById('workHours').textContent = workHours.toFixed(1) + ' ชั่วโมง';
+                    document.getElementById('workHours').textContent = `${workHours.toFixed(1)} ชั่วโมง`;
+                    
                     const isOvertime = workHours > CONFIG.OVERTIME_THRESHOLD;
-                    const message = isOvertime
-                        ? `🎉 เช็คเอาท์สำเร็จ! คุณทำงาน ${workHours.toFixed(1)} ชั่วโมง (ล่วงเวลา ${(workHours - CONFIG.OVERTIME_THRESHOLD).toFixed(1)} ชม.)`
-                        : `✅ เช็คเอาท์สำเร็จ! คุณทำงาน ${workHours.toFixed(1)} ชั่วโมงวันนี้`;
+                    const message = isOvertime ? 
+                        `🎉 เช็คเอาท์สำเร็จ! คุณทำงาน ${workHours.toFixed(1)} ชั่วโมง (ล่วงเวลา ${(workHours - CONFIG.OVERTIME_THRESHOLD).toFixed(1)} ชม.)` :
+                        `✅ เช็คเอาท์สำเร็จ! คุณทำงาน ${workHours.toFixed(1)} ชั่วโมงวันนี้`;
+                    
                     showMessage(message, 'success');
-                    updateTodayLogsDisplay();
+                    loadTodayLogs();
                     showNotification('บันทึกการเช็คเอาท์เรียบร้อย!');
-                    updateConnectionStatus('ออนไลน์', true);
                 } else {
-                    throw new Error(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+                    throw new Error(result.message || 'ไม่สามารถบันทึกข้อมูลได้');
                 }
+
             } catch (error) {
-                console.error('Check-out failed:', error);
-                showMessage('❌ เช็คเอาท์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
-                updateConnectionStatus('มีปัญหา', false);
-                if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                    const workHours = isCheckedIn && checkInTime ? (now - checkInTime) / (1000 * 60 * 60) : 0;
-                    const attendanceData = {
-                        name: getCurrentUserName(),
-                        employeeId: getCurrentUserId(),
-                        status: 'เช็คเอาท์',
-                        lat: currentLocation ? currentLocation.lat : null,
-                        lng: currentLocation ? currentLocation.lng : null,
-                        address: locationText,
-                        timestamp: now.toISOString(),
-                        workHours: workHours.toFixed(2),
-                        synced: false
-                    };
-                    saveToLocalStorage(attendanceData);
-                    isCheckedIn = false;
-                    checkInTime = null;
-                    document.getElementById('todayStatus').textContent = 'ทำงาน ' + workHours.toFixed(1) + ' ชม. (รอซิงค์)';
-                    document.getElementById('todayStatus').style.color = '#ff9800';
-                    document.getElementById('checkinBtn').disabled = false;
-                    document.getElementById('workHours').textContent = workHours.toFixed(1) + ' ชั่วโมง';
-                    showMessage('⚠️ เช็คเอาท์สำเร็จ แต่ยังไม่ได้ซิงค์ข้อมูล จะทำการซิงค์เมื่อเชื่อมต่ออินเทอร์เนตแล้ว', 'warning');
-                    updateTodayLogsDisplay();
-                }
-            } finally {
-                btn.innerHTML = originalText;
+                console.error('Check-out error:', error);
+                showMessage(`❌ เกิดข้อผิดพลาด: ${error.message}`, 'error');
                 btn.disabled = false;
             }
+            
+            btn.innerHTML = originalText;
         }
 
-        function saveToLocalStorage(attendanceData) {
+        function saveAttendanceRecord(record) {
+            let records = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
+            records.push(record);
+            localStorage.setItem('attendanceRecords', JSON.stringify(records));
+        }
+
+        function loadTodayLogs() {
+            if (!currentUser) return;
+            
             const today = new Date().toDateString();
-            const userKey = getCurrentUserId() + '_' + today;
-            const savedLogs = JSON.parse(localStorage.getItem('todayLogs') || '{}');
-            if (!savedLogs[userKey]) savedLogs[userKey] = [];
-            savedLogs[userKey].push(attendanceData);
-            todayLogs = savedLogs[userKey];
-            localStorage.setItem('todayLogs', JSON.stringify(savedLogs));
+            const records = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
+            const todayRecords = records.filter(r => r.userId === currentUser.id && r.date === today);
+            
+            const logsContainer = document.getElementById('recentLogs');
+            if (todayRecords.length === 0) {
+                logsContainer.innerHTML = `
+                    <div class="log-entry">
+                        <div class="log-type">
+                            <span>📝</span>
+                            <span>ยังไม่มีกิจกรรมในวันนี้</span>
+                        </div>
+                        <div class="log-time">--:--</div>
+                    </div>
+                `;
+                return;
+            }
+
+            logsContainer.innerHTML = todayRecords.map(record => {
+                const time = new Date(record.timestamp).toLocaleTimeString('th-TH', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const icon = record.type === 'check-in' ? '🟢' : '🔴';
+                const typeText = record.type === 'check-in' ? 'เช็คอิน' : 'เช็คเอาท์';
+                
+                return `
+                    <div class="log-entry">
+                        <div class="log-type">
+                            <span>${icon}</span>
+                            <span>${typeText}</span>
+                        </div>
+                        <div class="log-time">${time}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function showMessage(message, type) {
             const messageEl = document.getElementById('statusMessage');
             if (messageEl) {
                 messageEl.textContent = message;
-                messageEl.className = 'status-message status-' + type;
+                messageEl.className = `status-message status-${type}`;
                 messageEl.style.display = 'block';
-                setTimeout(() => { messageEl.style.display = 'none'; }, 8000);
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 8000);
             }
         }
 
         function showNotification(message) {
             const notification = document.createElement('div');
             notification.className = 'notification';
-            notification.innerHTML = '<strong>✅ สำเร็จ</strong><br>' + message;
+            notification.innerHTML = `
+                <strong>✅ สำเร็จ</strong><br>
+                ${message}
+            `;
+            
             document.body.appendChild(notification);
-            setTimeout(() => { notification.classList.add('show'); }, 100);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
             setTimeout(() => {
                 notification.classList.remove('show');
-                setTimeout(() => {
-                    if (document.body.contains(notification)) document.body.removeChild(notification);
-                }, 300);
+                setTimeout(() => document.body.removeChild(notification), 300);
             }, 3000);
         }
 
         function switchTab(tabName) {
-            const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            const activeTab = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
-            if (activeTab) activeTab.classList.add('active');
-            const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(content => content.classList.remove('active'));
-            const activeContent = document.getElementById(`${tabName}-tab`);
-            if (activeContent) activeContent.classList.add('active');
+            // Tab switching logic (simplified for employee-only version)
+            console.log('Tab:', tabName);
         }
 
+        // Handle network status
         window.addEventListener('online', () => {
-            showNotification('✅ กลับมาออนไลน์แล้ว! กำลังตรวจสอบการเชื่อมต่อ...');
-            testConnection();
-            syncPendingData();
+            showNotification('✅ กลับมาออนไลน์แล้ว! กำลังซิงค์ข้อมูล...');
         });
 
         window.addEventListener('offline', () => {
-            showMessage('⚠️ คุณออฟไลน์อยู่ ข้อมูลจะซิงค์เมื่อเชื่อมต่ออินเทอร์เนตแล้ว', 'warning');
-            updateConnectionStatus('ออฟไลน์', false);
+            showMessage('⚠️ คุณออฟไลน์อยู่ ข้อมูลจะซิงค์เมื่อเชื่อมต่ออินเทอร์เน็ตแล้ว', 'warning');
         });
-
-        function syncPendingData() {
-            const savedLogs = JSON.parse(localStorage.getItem('todayLogs') || '{}');
-            let hasPendingData = false;
-            for (let userKey in savedLogs) {
-                const logs = savedLogs[userKey];
-                for (let i = 0; i < logs.length; i++) {
-                    const log = logs[i];
-                    if (log.synced === false) {
-                        hasPendingData = true;
-                        const syncData = { ...log };
-                        delete syncData.synced;
-                        fetch(CONFIG.SCRIPT_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(syncData)
-                        }).then(response => {
-                            if (response.ok) {
-                                log.synced = true;
-                                localStorage.setItem('todayLogs', JSON.stringify(savedLogs));
-                            }
-                        }).catch(error => console.error('Sync failed for log:', log, error));
-                    }
-                }
-            }
-            if (hasPendingData) showNotification('📤 ซิงค์ข้อมูลที่รอการส่งเรียบร้อย!');
-        }
-
-        setInterval(testConnection, 30000);
-    
-// ✅ เรียก loadEmployees() อย่างถูกต้อง
-async function startApp() {
-  await loadEmployees();
-}
-startApp();
-
-</script>
+    </script>
 </body>
 </html>
